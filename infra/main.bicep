@@ -37,6 +37,7 @@ var tags = {
   Course: 'cloud26'
   Owner: ownerEmail
   ManagedBy: 'Bicep'
+  InfraPreview: 'enabled'
 }
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: planName
