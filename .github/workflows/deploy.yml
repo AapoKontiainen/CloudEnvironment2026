@@ -56,9 +56,10 @@ jobs:
             --parameters infra/dev.bicepparam
 
   app:
-    needs: infra       # app deploys only onto verified infrastructure
-    if: ${{ !cancelled() && needs.infra.result != 'failure' }}   # ...or when infra was skipped on purpose
+    needs: infra
+    if: ${{ !cancelled() && needs.infra.result != 'failure' }}
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
