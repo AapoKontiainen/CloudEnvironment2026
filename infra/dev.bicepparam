@@ -1,6 +1,6 @@
 using 'main.bicep'
 
-param yourName = 'aapo'
+param yourName = readEnvironmentVariable('YOUR_NAME', 'aapo')
 param ownerEmail = 'kontiainenape@gmail.com'
 param environment = 'dev'
 param location = 'swedencentral'
