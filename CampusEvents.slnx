@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/01-Azure-Environment/" />
+  <Folder Name="/01-Azure-Environment/StarterCode/">
+    <Project Path="01-Azure-Environment/StarterCode/CampusEvents/CampusEvents.csproj" />
+  </Folder>
+  <Project Path="CampusEvents/CampusEvents.csproj" />
+</Solution>

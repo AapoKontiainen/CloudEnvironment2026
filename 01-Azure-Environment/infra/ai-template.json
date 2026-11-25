@@ -1,0 +1,153 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.48.1.52935",
+      "templateHash": "3393457930371310953"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location for all resources."
+      }
+    },
+    "environmentName": {
+      "type": "string",
+      "defaultValue": "dev",
+      "metadata": {
+        "description": "Environment identifier."
+      }
+    },
+    "appName": {
+      "type": "string",
+      "defaultValue": "[format('app-campusevents-{0}', parameters('environmentName'))]",
+      "metadata": {
+        "description": "Name of the Web App."
+      }
+    },
+    "planName": {
+      "type": "string",
+      "defaultValue": "[format('plan-campusevents-{0}', parameters('environmentName'))]",
+      "metadata": {
+        "description": "Name of the App Service Plan."
+      }
+    },
+    "dbServerName": {
+      "type": "string",
+      "defaultValue": "[format('psql-campusevents-{0}', parameters('environmentName'))]",
+      "metadata": {
+        "description": "Name of the PostgreSQL Flexible Server."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "psqladmin",
+      "metadata": {
+        "description": "PostgreSQL administrator username."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "PostgreSQL administrator password."
+      }
+    }
+  },
+  "variables": {
+    "commonTags": {
+      "Application": "cloud26",
+      "Environment": "[parameters('environmentName')]",
+      "Course": "cloud26"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2023-12-01",
+      "name": "[parameters('planName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "F1",
+        "tier": "Free"
+      },
+      "kind": "linux",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-12-01",
+      "name": "[parameters('appName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('planName'))]",
+        "siteConfig": {
+          "linuxFxVersion": "DOTNETCORE|10.0",
+          "alwaysOn": false
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('planName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2023-03-01-preview",
+      "name": "[parameters('dbServerName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Standard_B1ms",
+        "tier": "Burstable"
+      },
+      "properties": {
+        "version": "16",
+        "administratorLogin": "[parameters('adminUsername')]",
+        "administratorLoginPassword": "[parameters('adminPassword')]",
+        "storage": {
+          "storageSizeGB": 32
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+      "apiVersion": "2023-03-01-preview",
+      "name": "[format('{0}/{1}', parameters('dbServerName'), 'campusevents')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('dbServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
+      "apiVersion": "2023-03-01-preview",
+      "name": "[format('{0}/{1}', parameters('dbServerName'), 'AllowAllAzureServices')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('dbServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2023-12-01",
+      "name": "[format('{0}/{1}', parameters('appName'), 'appsettings')]",
+      "properties": {
+        "ConnectionStrings__DefaultConnection": "[format('Server={0};Database=campusevents;Port=5432;User Id={1};Password={2};Ssl Mode=Require;', reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('dbServerName')), '2023-03-01-preview').fullyQualifiedDomainName, parameters('adminUsername'), parameters('adminPassword'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('dbServerName'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+      ]
+    }
+  ]
+}
