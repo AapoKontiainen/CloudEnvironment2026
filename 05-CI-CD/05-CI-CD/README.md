@@ -229,7 +229,7 @@ Create a repository on GitHub (private is fine with the Student Pack), then:
 ```powershell
 git commit -m "Campus Events: app and infra"
 git branch -M main
-git remote add origin https://github.com/<your-username>/<your-repo>.git
+git remote add origin https://github.com/AapoKontiainen/CloudEnvironment2026.git
 git push -u origin main
 ```
 
