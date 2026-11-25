@@ -19,6 +19,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  YOUR_NAME: ${{ vars.YOUR_NAME }}
   RESOURCE_GROUP: rg-cloud26-${{ vars.YOUR_NAME }}-dev
   APP_NAME: app-cloud26-${{ vars.YOUR_NAME }}-dev
 

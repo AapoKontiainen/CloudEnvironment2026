@@ -21,8 +21,8 @@ param appServiceSku string = 'F1'
 
 // --- Naming convention (course standard) and shared tags ---
 
-var planName = 'plan-cloud26-aapo-${environment}'
-var appName = 'app-cloud26-aapo-${environment}'
+var planName = 'plan-cloud26-${yourName}-${environment}'
+var appName = 'app-cloud26-${yourName}-${environment}'
 
 @secure()
 @description('PostgreSQL admin password — read from POSTGRES_ADMIN_PASSWORD, never stored in a file')
