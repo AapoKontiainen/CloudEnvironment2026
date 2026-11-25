@@ -4,7 +4,6 @@ using CampusEvents.Models;
 using CampusEvents.Services;
 using CampusEvents.Data;
 using Microsoft.EntityFrameworkCore;
-using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -3,5 +3,6 @@
   <Folder Name="/01-Azure-Environment/StarterCode/">
     <Project Path="01-Azure-Environment/StarterCode/CampusEvents/CampusEvents.csproj" />
   </Folder>
+  <Project Path="CampusEvents.Tests/CampusEvents.Tests.csproj" />
   <Project Path="CampusEvents/CampusEvents.csproj" />
 </Solution>
