@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using CampusEvents.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -28,6 +29,16 @@ public class EventsApiTests : IClassFixture<TestAppFactory>
         HttpResponseMessage response = await _client.GetAsync("/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Info_ExposesOnlyMajorFrameworkVersion()
+    {
+        using JsonDocument info = await _client.GetFromJsonAsync<JsonDocument>("/info")
+            ?? throw new InvalidOperationException("Expected /info to return JSON.");
+
+        Assert.Equal(Environment.Version.Major, info.RootElement.GetProperty("frameworkMajor").GetInt32());
+        Assert.False(info.RootElement.TryGetProperty("framework", out _));
     }
 
     [Fact]
