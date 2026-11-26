@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Application Insights: only when the environment provides a connection string
 // (Azure does, via Bicep). Locally and in tests the SDK is not registered at all.
-if (builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] is not null)
+if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
 {
     builder.Services.AddApplicationInsightsTelemetry();
 
