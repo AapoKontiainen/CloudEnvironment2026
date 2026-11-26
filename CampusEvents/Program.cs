@@ -116,7 +116,7 @@ app.MapPost("/api/events", (CreateEventRequest request, IEventStore store) =>
     return Results.Created($"/api/events/{created.Id}", created.ToResponse());
 });
 
-app.MapPost("/api/events/{id:guid}/registrations"
+app.MapPost("/api/events/{id:guid}/registrations",
     (Guid id, RegisterRequest request, IEventStore store, ILogger<Program> logger) =>
 {
     if (!TryValidate(request, out Dictionary<string, string[]> errors))
