@@ -100,7 +100,23 @@ app.MapGet("/api/events/{id:guid}", (Guid id, IEventStore store) =>
         : Results.Ok(campusEvent.ToResponse());
 });
 
-app.MapPost("/api/events/{id:guid}/registrations",
+app.MapPost("/api/events", (CreateEventRequest request, IEventStore store) =>
+{
+    if (!TryValidate(request, out Dictionary<string, string[]> errors))
+    {
+        return Results.ValidationProblem(errors);
+    }
+
+    if (request.StartsAtUtc <= DateTime.UtcNow)
+    {
+        return Results.BadRequest(new { error = "StartsAtUtc must be in the future." });
+    }
+
+    CampusEvent created = store.Create(request);
+    return Results.Created($"/api/events/{created.Id}", created.ToResponse());
+});
+
+app.MapPost("/api/events/{id:guid}/registrations"
     (Guid id, RegisterRequest request, IEventStore store, ILogger<Program> logger) =>
 {
     if (!TryValidate(request, out Dictionary<string, string[]> errors))
