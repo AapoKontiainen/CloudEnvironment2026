@@ -13,4 +13,10 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="../../../CampusEvents/Data/*.cs" Link="Data/%(Filename)%(Extension)" />
+    <Compile Include="../../../CampusEvents/Models/*.cs" Link="Models/%(Filename)%(Extension)" />
+    <Compile Include="../../../CampusEvents/Services/*.cs" Link="Services/%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>
