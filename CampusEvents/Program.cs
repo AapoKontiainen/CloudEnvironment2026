@@ -80,7 +80,7 @@ app.MapGet("/info", () => Results.Json(new
     version = "1.1.0", // ← new field
     environment = app.Environment.EnvironmentName,
     machine = Environment.MachineName,
-    framework = Environment.Version.ToString(),
+    frameworkMajor = Environment.Version.Major,
     timeUtc = DateTime.UtcNow
 }));
 
@@ -128,18 +128,22 @@ app.MapPost("/api/events/{id:guid}/registrations",
 
     if (error == "Event not found.")
     {
-        logger.LogWarning("Registration rejected: event {EventId} not found", id);
+        logger.LogInformation("Registration rejected: event {EventId} not found", id);
         return Results.NotFound(new { error });
     }
 
     if (error is not null)
     {
-        logger.LogWarning("Registration rejected for event {EventId}: {Reason}", id, error);
+        logger.LogInformation("Registration rejected for event {EventId}: {Reason}", id, error);
         return Results.Conflict(new { error });
     }
 
-    logger.LogInformation("Registration {RegistrationId} created for event {EventId}",
-        registration!.Id, id);
+    if (registration is null)
+    {
+        throw new InvalidOperationException("Registration result was missing without an error.");
+    }
+
+    logger.LogInformation("Registration created for event {EventId}", id);
 
     return Results.Created($"/api/events/{id}/registrations/{registration.Id}", registration);
 });
