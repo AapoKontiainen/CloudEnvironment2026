@@ -33,6 +33,7 @@ var postgresAdminLogin  = 'campusadmin'
 var storageAccountName  = 'stcloud26${replace(yourName, '-', '')}${environment}' // letters + digits only, no hyphens, 3–24 characters total
 var logAnalyticsName = 'log-cloud26-${yourName}-${environment}'
 var appInsightsName  = 'appi-cloud26-${yourName}-${environment}'
+var actionGroupName = 'ag-cloud26-${yourName}-email'
 
 
 var tags = {
@@ -124,6 +125,16 @@ resource webApp 'Microsoft.Web/sites@2024-04-01' = {
         }
       ]
     }
+  }
+}
+
+module alerts 'modules/alerts.bicep' = {
+  name: 'alertsDeployment'
+  params: {
+    alertEmail: ownerEmail
+    actionGroupName: actionGroupName
+    webAppId: webApp.id
+    tags: tags
   }
 }
 
