@@ -5,10 +5,22 @@ using CampusEvents.Services;
 using CampusEvents.Data;
 using Microsoft.EntityFrameworkCore;
 using Azure.Storage.Blobs.Models;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddApplicationInsightsTelemetry();
+// Application Insights: only when the environment provides a connection string
+// (Azure does, via Bicep). Locally and in tests the SDK is not registered at all.
+if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+{
+    builder.Services.AddApplicationInsightsTelemetry();
+
+    // The SDK listens to ASP.NET Core, HttpClient and SqlClient by default.
+    // Npgsql publishes its own traces under the "Npgsql" source — subscribe to
+    // it so every PostgreSQL command shows up as a dependency.
+    builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddSource("Npgsql"));
+}
+
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -24,6 +36,8 @@ if (storageConnectionString is not null)
 builder.Services.AddScoped<IEventStore, PostgresEventStore>();
 
 var app = builder.Build();
+
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -102,6 +116,34 @@ app.MapPost("/api/events", (CreateEventRequest request, IEventStore store) =>
     return Results.Created($"/api/events/{created.Id}", created.ToResponse());
 });
 
+app.MapPost("/api/events/{id:guid}/registrations",
+    (Guid id, RegisterRequest request, IEventStore store, ILogger<Program> logger) =>
+{
+    if (!TryValidate(request, out Dictionary<string, string[]> errors))
+    {
+        return Results.ValidationProblem(errors);
+    }
+
+    (RegistrationResponse? registration, string? error) = store.Register(id, request);
+
+    if (error == "Event not found.")
+    {
+        logger.LogWarning("Registration rejected: event {EventId} not found", id);
+        return Results.NotFound(new { error });
+    }
+
+    if (error is not null)
+    {
+        logger.LogWarning("Registration rejected for event {EventId}: {Reason}", id, error);
+        return Results.Conflict(new { error });
+    }
+
+    logger.LogInformation("Registration {RegistrationId} created for event {EventId}",
+        registration!.Id, id);
+
+    return Results.Created($"/api/events/{id}/registrations/{registration.Id}", registration);
+});
+
 app.MapPut("/api/events/{id:guid}", (Guid id, UpdateEventRequest request, IEventStore store) =>
 {
     if (!TryValidate(request, out Dictionary<string, string[]> errors))
@@ -128,27 +170,6 @@ app.MapDelete("/api/events/{id:guid}", (Guid id, IEventStore store) =>
     return deleted ? Results.NoContent() : Results.NotFound(new { error = "Event not found." });
 });
 
-app.MapPost("/api/events/{id:guid}/registrations", (Guid id, RegisterRequest request, IEventStore store) =>
-{
-    if (!TryValidate(request, out Dictionary<string, string[]> errors))
-    {
-        return Results.ValidationProblem(errors);
-    }
-
-    (RegistrationResponse? registration, string? error) = store.Register(id, request);
-
-    if (error == "Event not found.")
-    {
-        return Results.NotFound(new { error });
-    }
-
-    if (error is not null)
-    {
-        return Results.Conflict(new { error });
-    }
-
-    return Results.Created($"/api/events/{id}/registrations/{registration!.Id}", registration);
-});
 
 app.MapGet("/api/events/{id:guid}/registrations", (Guid id, IEventStore store) =>
 {
